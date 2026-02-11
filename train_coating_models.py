@@ -31,7 +31,7 @@ def train_coating_models():
     
     # 1. K-Fold Cross Validation
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
-    cv_scores = cross_val_score(RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42), 
+    cv_scores = cross_val_score(RandomForestRegressor(n_estimators=100, max_depth=7, random_state=42), 
                                 X, y, cv=kf, scoring='r2')
     cv_r2_mean = np.mean(cv_scores)
     cv_r2_std = np.std(cv_scores)
@@ -39,7 +39,7 @@ def train_coating_models():
     # 2. Final Training & Test Evaluation
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+    model = RandomForestRegressor(n_estimators=100, max_depth=7, random_state=42)
     model.fit(X_train, y_train)
     
     y_pred = model.predict(X_test)
