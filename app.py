@@ -179,4 +179,3 @@ with tab2:
 st.sidebar.markdown("### 프로젝트 관리")
 st.sidebar.text("담당: 안현찬 (세계화학공업(주))")
 st.sidebar.text("최종 업데이트: 2026-02-12")
-st.sidebar.info("사용자 피드백을 반영하여 경로 동적화 및 교차 검증 시스템이 적용되었습니다.")
