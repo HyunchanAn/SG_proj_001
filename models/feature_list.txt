@@ -1,7 +1,7 @@
-¿Âµµ
-¹ÝÀÀ½Ã°£
+ï»¿ì˜¨ë„
+ë°˜ì‘ì‹œê°„
 Scale
-ÀÌ·Ð °íÇüºÐ(%)
+ì´ë¡  ê³ í˜•ë¶„(%)
 monomer_BA
 monomer_EHA
 monomer_CHMA

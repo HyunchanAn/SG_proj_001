@@ -65,7 +65,7 @@ def train_property_models_rf():
         joblib.dump(model, model_path)
         
         # Save feature list for inference
-        with open(os.path.join(model_dir, "feature_list.txt"), "w") as f:
+        with open(os.path.join(model_dir, "feature_list.txt"), "w", encoding="utf-8-sig") as f:
             f.write("\n".join(feature_cols))
         
         results.append({

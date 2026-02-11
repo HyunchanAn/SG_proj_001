@@ -21,7 +21,7 @@ def load_models():
 def get_features():
     feature_path = os.path.join(MODEL_DIR, "feature_list.txt")
     if os.path.exists(feature_path):
-        with open(feature_path, "r") as f:
+        with open(feature_path, "r", encoding="utf-8-sig") as f:
             return [line.strip() for line in f.readlines()]
     return []
 
