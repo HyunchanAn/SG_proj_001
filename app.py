@@ -239,7 +239,7 @@ with tab3:
         with opt_col2:
             st.subheader("AI 추천 최적 배합비")
             
-            if 'opt_result' in st.session_state:
+            if 'opt_result' in st.session_state and 'opt_target_info' in st.session_state:
                 res = st.session_state['opt_result']
                 target_info = st.session_state['opt_target_info']
                 
