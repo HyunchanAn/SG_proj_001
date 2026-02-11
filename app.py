@@ -124,15 +124,29 @@ with tab2:
             
             # 원단 선택 (fabric_ 피처 기반)
             fabric_options = [f.replace("fabric_", "") for f in coat_features if f.startswith("fabric_")]
-            selected_fabric = st.selectbox("기재(원단) 선택", fabric_options, key="coat_fabric")
+            selected_fabric = st.selectbox("기재(원단) 선택", fabric_options, index=fabric_options.index("T45") if "T45" in fabric_options else 0, key="coat_fabric")
             
             st.subheader("첨가제 및 경화제 (%)")
+            st.info("첨가제 및 경화제의 투입 비율(%)을 입력합니다.")
+            coat_sum_placeholder = st.empty()
+            
+            # 도포 예시값 (Row 0 데이터 기준)
+            default_additives = {
+                "hardener_CX100": 1.0,
+                "hardener_SV02": 0.7,
+                "additive_AF-10": 0.05
+            }
             
             additive_inputs = {}
             for feat in coat_features:
                 if feat.startswith("hardener_") or feat.startswith("additive_"):
                     name = feat.replace("hardener_", "[경화제] ").replace("additive_", "[첨가제] ")
-                    additive_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 20.0, 0.0, key=f"coat_{feat}")
+                    default_val = default_additives.get(feat, 0.0)
+                    additive_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 20.0, default_val, key=f"coat_{feat}")
+            
+            # 합계 표시
+            total_coat_pct = sum(additive_inputs.values())
+            coat_sum_placeholder.info(f"현재 첨가제/경화제 합계: {total_coat_pct:.3f} %")
 
         with col2:
             st.subheader("도포 성능 예측 결과")
