@@ -18,6 +18,8 @@
 - 결과: inference.py 및 app.py 구축 완료
 
 ## 개발 환경 설정 및 의존성 설치 문제 해결
-- 이슈: 가상환경 활성화 후 streamlit 등 모듈 로드 실패
-- 원인: 가상환경 내 패키지 미설치 상태 확인
-- 조치: .venv 내 python 명령을 사용하여 requirements.txt 기반 패키지 재설치 실시
+- 조치: .venv 내 requirements.txt 패키지 설치 완료
+
+## 최종 결과물 버전 관리 및 배포
+- Git 작업: .gitignore 설정 및 전체 소스 코드 커밋/푸시 완료
+- 로그: 1일차 주요 성과 및 코드 저장소 동기화 완료
