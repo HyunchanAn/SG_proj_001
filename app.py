@@ -197,20 +197,32 @@ with tab3:
         opt_col1, opt_col2 = st.columns([1, 2])
         
         with opt_col1:
-            st.subheader("목표 물성 설정")
-            # 대상 물성 선택 (학습된 모델이 있는 타겟들)
+            st.subheader("다중 목표 물성 설정")
             available_targets = list(syn_models.keys())
-            target_property = st.selectbox("최적화 대상 물성", available_targets, index=available_targets.index("Tg") if "Tg" in available_targets else 0)
+            selected_properties = st.multiselect("최적화 대상 물성 선택 (복수 선택 가능)", 
+                                                 available_targets, 
+                                                 default=["Tg"] if "Tg" in available_targets else [])
             
-            # 물성별 슬라이더 범위 동적 설정
-            if "Tg" in target_property:
-                target_val = st.slider(f"목표 {target_property}", -80.0, 100.0, -30.0, step=0.5)
-            elif "점도" in target_property:
-                target_val = st.number_input(f"목표 {target_property}", 0, 50000, 5000)
-            elif "입도" in target_property:
-                target_val = st.number_input(f"목표 {target_property}", 0, 1000, 150)
-            else:
-                target_val = st.number_input(f"목표 {target_property}", 0.0, 10000.0, 100.0)
+            targets_dict = {}
+            if selected_properties:
+                for prop in selected_properties:
+                    st.markdown(f"**{prop} 설정**")
+                    col_val, col_weight = st.columns(2)
+                    
+                    with col_val:
+                        if "Tg" in prop:
+                            val = st.number_input(f"목표 {prop}", -80.0, 100.0, -30.0, step=0.5, key=f"opt_val_{prop}")
+                        elif "점도" in prop:
+                            val = st.number_input(f"목표 {prop}", 0, 50000, 5000, key=f"opt_val_{prop}")
+                        elif "입도" in prop:
+                            val = st.number_input(f"목표 {prop}", 0, 1000, 150, key=f"opt_val_{prop}")
+                        else:
+                            val = st.number_input(f"목표 {prop}", 0.0, 10000.0, 100.0, key=f"opt_val_{prop}")
+                    
+                    with col_weight:
+                        weight = st.slider(f"{prop} 가중치 (중요도)", 0.0, 2.0, 1.0, step=0.1, key=f"opt_weight_{prop}")
+                    
+                    targets_dict[prop] = {'target': val, 'weight': weight}
             
             st.subheader("공정 제약 조건")
             opt_temp = st.number_input("중합 온도 (°C)", 50, 120, 80, key="opt_temp")
@@ -218,45 +230,56 @@ with tab3:
             opt_solid = st.number_input("이론 고형분 (%)", 10.0, 70.0, 48.0, key="opt_solid")
             
             if st.button("최적 배합비 산출 시작 🚀", use_container_width=True):
-                from scripts.optimize_recipe import optimize_recipe
-                
-                params = {
-                    '온도': opt_temp,
-                    '반응시간': opt_time,
-                    '이론 고형분(%)': opt_solid / 100.0,
-                    'Scale': 500
-                }
-                
-                with st.spinner(f"최적의 {target_property} 달성 배합비를 계산 중입니다..."):
-                    recipe, err = optimize_recipe(target_property, target_val, params)
+                if not targets_dict:
+                    st.warning("최소 하나 이상의 목표 물성을 설정해 주세요.")
+                else:
+                    from scripts.optimize_recipe import optimize_recipe
                     
-                    if recipe:
-                        st.session_state['opt_result'] = recipe
-                        st.session_state['opt_target_info'] = f"{target_property}: {target_val}"
-                    else:
-                        st.error(f"오류 발생: {err}")
+                    params = {
+                        '온도': opt_temp,
+                        '반응시간': opt_time,
+                        '이론 고형분(%)': opt_solid / 100.0,
+                        'Scale': 500
+                    }
+                    
+                    with st.spinner("다중 목표를 최적화하는 배합비를 계산 중입니다..."):
+                        recipe, err = optimize_recipe(targets_dict, params)
+                        
+                        if recipe:
+                            st.session_state['opt_result'] = recipe
+                            st.session_state['opt_targets_dict'] = targets_dict
+                        else:
+                            st.error(f"오류 발생: {err}")
 
         with opt_col2:
             st.subheader("AI 추천 최적 배합비")
             
-            if 'opt_result' in st.session_state and 'opt_target_info' in st.session_state:
+            if 'opt_result' in st.session_state and 'opt_targets_dict' in st.session_state:
                 res = st.session_state['opt_result']
-                target_info = st.session_state['opt_target_info']
+                targets = st.session_state['opt_targets_dict']
                 
-                st.success(f"목표 {target_info} 달성을 위한 최적 조합을 찾았습니다.")
+                target_summary = ", ".join([f"{k}({v['target']})" for k, v in targets.items()])
+                st.success(f"설정된 다중 목표 [{target_summary}] 달성을 위한 최적 조합을 찾았습니다.")
                 
                 # 결과 테이블 구성
                 res_data = []
                 for m, v in res.items():
                     res_data.append({"항목": m, "함량 (phr)": v})
                 res_df = pd.DataFrame(res_data)
-                st.table(res_df)
+                
+                col_table, col_chart = st.columns([1, 1.2])
+                with col_table:
+                    st.table(res_df.set_index("항목"))
+                
+                with col_chart:
+                    import plotly.express as px
+                    fig = px.pie(res_df, values='함량 (phr)', names='항목', 
+                                 title='추천 레시피 구성비',
+                                 color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig.update_layout(margin=dict(t=40, b=0, l=0, r=0))
+                    st.plotly_chart(fig, use_container_width=True)
                 
                 st.info("💡 위 배합비를 '합성 시뮬레이터' 탭에 입력하여 실제 예측치를 상세 검증해 보세요.")
-                
-                import plotly.express as px
-                fig = px.pie(res_df, values='함량 (phr)', names='항목', title=f'추천 레시피 구성비 ({target_info})')
-                st.plotly_chart(fig, use_container_width=True)
             else:
                 st.write("왼쪽에서 목표 설정을 완료한 후 버튼을 클릭해 주세요.")
 
