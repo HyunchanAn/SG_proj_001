@@ -6,12 +6,16 @@ from sklearn.model_selection import train_test_split, cross_val_score, KFold
 from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
 
-# 현재 스크립트 위치 기준 경로 설정
+# 현재 스크립트 위치 기준 상위 디렉토리 경로 설정
 script_dir = os.path.dirname(os.path.abspath(__file__))
-input_path = os.path.join(script_dir, "data_cleaned", "model_features.csv")
-model_dir = os.path.join(script_dir, "models")
+base_dir = os.path.dirname(script_dir)
+input_path = os.path.join(base_dir, "data_cleaned", "model_features.csv")
+model_dir = os.path.join(base_dir, "models")
+report_dir = os.path.join(base_dir, "reports")
 if not os.path.exists(model_dir):
     os.makedirs(model_dir)
+if not os.path.exists(report_dir):
+    os.makedirs(report_dir)
 
 def train_property_models_rf():
     if not os.path.exists(input_path):
@@ -91,8 +95,8 @@ if __name__ == "__main__":
     metrics = train_property_models_rf()
     print("\nTraining Complete.")
     
-    # Save training report
-    report_path = os.path.join(script_dir, "training_metrics.txt")
+    # Save training report (in reports folder)
+    report_path = os.path.join(report_dir, "training_metrics.txt")
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write("# Model Training Report (RandomForest with Cross-Validation)\n\n")
         f.write("| Target | Data Points | CV R2 Mean | CV R2 Std | Test R2 | Test MAE |\n")

@@ -2,7 +2,9 @@ import pandas as pd
 import os
 import re
 
-base_path = r"e:\Github\SG_proj_001"
+# 현재 스크립트 위치 기준 상위 디렉토리 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))
+base_path = os.path.dirname(script_dir)
 output_dir = os.path.join(base_path, "data_cleaned")
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)

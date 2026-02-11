@@ -3,10 +3,11 @@ import numpy as np
 import os
 import re
 
-# 현재 스크립트 위치 기준 경로 설정
+# 현재 스크립트 위치 기준 상위 디렉토리 경로 설정
 script_dir = os.path.dirname(os.path.abspath(__file__))
-input_path = os.path.join(script_dir, "data_cleaned", "cleaned_coating_data.csv")
-output_path = os.path.join(script_dir, "data_cleaned", "coating_model_features.csv")
+base_dir = os.path.dirname(script_dir)
+input_path = os.path.join(base_dir, "data_cleaned", "cleaned_coating_data.csv")
+output_path = os.path.join(base_dir, "data_cleaned", "coating_model_features.csv")
 
 def parse_ratios(text, prefix):
     if pd.isna(text) or not isinstance(text, str):
