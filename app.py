@@ -45,11 +45,18 @@ else:
     with col1:
         st.subheader("실험 조건 입력")
         
+        # 실제 실험 데이터 기반 예시값 (S250421A 레시피 기준)
+        default_monomers = {
+            "monomer_BA": 89.7,
+            "monomer_MMA": 9.0,
+            "monomer_AA": 1.3
+        }
+        
         # 기본 공정 조건
-        temp = st.slider("반응 온도 (°C)", 50, 100, 80)
-        time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.5)
-        solid_pct = st.number_input("이론 고형분 (wt%)", 0.0, 100.0, 40.0)
-        scale = st.number_input("Scale (g)", 0.0, 2000.0, 900.0)
+        temp = st.slider("반응 온도 (°C)", 50, 100, 83)
+        time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.75)
+        solid_pct = st.number_input("이론 고형분 (wt%)", 0.0, 100.0, 48.0)
+        scale = st.number_input("Scale (g)", 0.0, 2000.0, 524.27)
 
         st.subheader("모노머 배합비 (함량 입력)")
         st.info("모노머 함량의 합계가 100(phr)이 되도록 입력하는 것을 권장합니다.")
@@ -59,7 +66,15 @@ else:
         for feat in all_features:
             if feat.startswith("monomer_"):
                 name = feat.replace("monomer_", "")
-                monomer_inputs[feat] = st.number_input(f"{name} 함량 (phr)", 0.0, 1000.0, 0.0)
+                default_val = default_monomers.get(feat, 0.0)
+                monomer_inputs[feat] = st.number_input(f"{name} 함량 (phr)", 0.0, 1000.0, default_val)
+        
+        # 실시간 합계 계산 및 표시
+        total_phr = sum(monomer_inputs.values())
+        if abs(total_phr - 100.0) > 0.01:
+            st.warning(f"현재 배합비 합계: {total_phr:.2f} phr (100 phr에서 벗어나 있습니다.)")
+        else:
+            st.success(f"현재 배합비 합계: {total_phr:.2f} phr (정상)")
 
     with col2:
         st.subheader("예측 결과 대시보드")
