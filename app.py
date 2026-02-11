@@ -61,6 +61,9 @@ else:
         st.subheader("모노머 배합비 (함량 입력)")
         st.info("모노머 함량의 합계가 100(phr)이 되도록 입력하는 것을 권장합니다.")
         
+        # 합계 표시를 위한 빈 공간 확보 (안내 문구 바로 아래)
+        sum_placeholder = st.empty()
+        
         # 모노머 입력 동적 생성
         monomer_inputs = {}
         for feat in all_features:
@@ -69,12 +72,12 @@ else:
                 default_val = default_monomers.get(feat, 0.0)
                 monomer_inputs[feat] = st.number_input(f"{name} 함량 (phr)", 0.0, 1000.0, default_val)
         
-        # 실시간 합계 계산 및 표시
+        # 실시간 합계 계산 및 상단 placeholder 업데이트
         total_phr = sum(monomer_inputs.values())
         if abs(total_phr - 100.0) > 0.01:
-            st.warning(f"현재 배합비 합계: {total_phr:.2f} phr (100 phr에서 벗어나 있습니다.)")
+            sum_placeholder.warning(f"현재 배합비 합계: {total_phr:.2f} phr (100 phr에서 벗어나 있습니다.)")
         else:
-            st.success(f"현재 배합비 합계: {total_phr:.2f} phr (정상)")
+            sum_placeholder.success(f"현재 배합비 합계: {total_phr:.2f} phr (정상)")
 
     with col2:
         st.subheader("예측 결과 대시보드")
