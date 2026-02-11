@@ -13,16 +13,14 @@ def extract_monomer_features(text):
     if pd.isna(text) or not isinstance(text, str) or text.strip() == "":
         return {}
     
-    # 정규표현식 강화: 'BA 40', 'BA(40)', 'BA 40/EA 10', 'BA 40.5 EA 10' 등 대응
-    # 1. 괄호 제거 및 슬래시/쉼표를 공백으로 치환하여 통일
-    clean_text = re.sub(r'[\(\),/]', ' ', text)
-    # 2. 이름과 숫자 쌍 추출 (예: BA 40)
-    matches = re.findall(r'([a-zA-Z가-힣0-9.-]+)\s*([\d.]+)', clean_text)
+    # 1. 괄호 안의 숫자(함량)를 포함한 화학명 쌍 추출
+    # 하이픈(-), 점(.)을 포함한 화학명 및 숫자 추출 보강
+    matches = re.findall(r'([a-zA-Z가-힣0-9\-\.]+)\s*\(?([\d.]+)\)?', text)
     
     features = {}
     for name, val in matches:
         try:
-            # 특수문자로 시작하거나 끝나는 이름 정제
+            # 특수문자로 시작하거나 끝나는 이름 정제 (중간 하이픈은 보존)
             feat_name = "monomer_" + name.strip('-').strip('.')
             features[feat_name] = float(val)
         except:
