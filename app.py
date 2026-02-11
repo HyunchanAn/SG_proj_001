@@ -45,9 +45,10 @@ coat_features = get_feature_list("coating_feature_list.txt")
 st.title("AI 고분자 물성 시뮬레이션 시스템")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["🧪 합성 시뮬레이터", "🏗️ 도포 시뮬레이터"])
+tab1, tab2, tab3 = st.tabs(["🧪 합성 시뮬레이터", "🏗️ 도포 시뮬레이터", "🎯 역설계 시뮬레이터"])
 
 with tab1:
+    # ... (생략된 기존 tab1 로직은 유지됨)
     st.header("중합 공정 및 합성 물성 예측")
     if not syn_models:
         st.error("합성 모델을 찾을 수 없습니다.")
@@ -85,6 +86,7 @@ with tab1:
         with col2:
             st.subheader("합성 결과 예측 대시보드")
             
+            # 입력 데이터 구성
             input_dict = {
                 '온도': temp,
                 '반응시간': time,
@@ -93,7 +95,14 @@ with tab1:
             }
             input_dict.update(monomer_inputs)
             
+            # 화학적 도메인 피처 추가 (실시간 계산)
+            from scripts.chemical_db import get_chemical_features
+            chem_f = get_chemical_features(monomer_inputs)
+            input_dict.update(chem_f)
+            
             input_df = pd.DataFrame([input_dict])
+            
+            # 피처 목록 동기화 및 순서 고정
             for col in syn_features:
                 if col not in input_df.columns:
                     input_df[col] = 0
@@ -175,6 +184,71 @@ with tab2:
             st.info("도포 모델은 경화제 종류와 기재 타입에 따른 점착력 변동을 예측합니다.")
             st.write("입력 조건 요약:")
             st.dataframe(coat_input_df.T.rename(columns={0: "값"}))
+
+with tab3:
+    st.header("목표 물성 기반 역설계 (Inverse Design)")
+    st.markdown("---")
+    
+    if not syn_models:
+        st.error("학습된 합성 모델이 없어 역설계 기능을 사용할 수 없습니다.")
+    else:
+        st.info("원하는 목표 물성($T_g$ 등)을 입력하면, AI가 최적의 모노머 배합비를 추천합니다.")
+        
+        opt_col1, opt_col2 = st.columns([1, 2])
+        
+        with opt_col1:
+            st.subheader("목표 물성 설정")
+            target_tg = st.slider("목표 유리전이온도 (Tg, °C)", -80.0, 100.0, -30.0, step=0.5, key="opt_target_tg")
+            
+            st.subheader("공정 제약 조건")
+            opt_temp = st.number_input("중합 온도 (°C)", 50, 120, 80, key="opt_temp")
+            opt_time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.5, key="opt_time")
+            opt_solid = st.number_input("이론 고형분 (%)", 10.0, 70.0, 48.0, key="opt_solid")
+            
+            if st.button("최적 배합비 산출 시작 🚀", use_container_width=True):
+                from scripts.optimize_recipe import optimize_recipe
+                
+                params = {
+                    '온도': opt_temp,
+                    '반응시간': opt_time,
+                    '이론 고형분(%)': opt_solid / 100.0,
+                    'Scale': 500 # 기본값
+                }
+                
+                with st.spinner("최적의 배합비를 계산 중입니다..."):
+                    recipe, err = optimize_recipe(target_tg, params)
+                    
+                    if recipe:
+                        st.session_state['opt_result'] = recipe
+                        st.session_state['opt_target_tg_val'] = target_tg
+                    else:
+                        st.error(f"오류 발생: {err}")
+
+        with opt_col2:
+            st.subheader("AI 추천 최적 배합비")
+            
+            if 'opt_result' in st.session_state:
+                res = st.session_state['opt_result']
+                target_val = st.session_state['opt_target_tg_val']
+                
+                st.success(f"목표 Tg {target_val}°C 달성을 위한 최적 조합을 찾았습니다.")
+                
+                # 결과 시각화
+                res_df = pd.DataFrame([
+                    {"항목": "BA (Butyl Acrylate)", "함량 (phr)": res["BA"]},
+                    {"항목": "MMA (Methyl Methacrylate)", "함량 (phr)": res["MMA"]},
+                    {"항목": "AA (Acrylic Acid)", "함량 (phr)": res["AA"]},
+                ])
+                st.table(res_df)
+                
+                st.info("💡 위 배합비를 '합성 시뮬레이터' 탭의 모노머 함량에 입력하여 상세 물성을 검증해 보세요.")
+                
+                # 파이 차트 등 추가 시각화 가능
+                import plotly.express as px
+                fig = px.pie(res_df, values='함량 (phr)', names='항목', title='추천 모노머 구성비')
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.write("왼쪽에서 목표 설정을 완료한 후 버튼을 클릭해 주세요.")
 
 st.sidebar.markdown("### 프로젝트 관리")
 st.sidebar.text("담당: 안현찬 (세계화학공업(주))")

@@ -43,6 +43,12 @@ def preprocess_for_model():
         monomer_df = pd.DataFrame(monomer_data).fillna(0)
         print(f"Extracted {len(monomer_df.columns)} monomer features.")
         
+        # 1-1. Add Chemical Domain Knowledge Features
+        from chemical_db import get_chemical_features
+        chem_features_list = [get_chemical_features(m_dict) for m_dict in monomer_data]
+        chem_df = pd.DataFrame(chem_features_list)
+        print(f"Added {len(chem_df.columns)} chemical domain features.")
+        
         # 2. Select numerical process features
         process_cols = ['온도', '반응시간', 'Scale', '이론 고형분(%)']
         # Filter existing columns only
@@ -60,7 +66,7 @@ def preprocess_for_model():
             target_df[col] = pd.to_numeric(target_df[col], errors='coerce')
         
         # Combine
-        final_df = pd.concat([process_df, monomer_df, target_df], axis=1)
+        final_df = pd.concat([process_df, monomer_df, chem_df, target_df], axis=1)
         
         # Drop rows where all existing targets are null
         final_df = final_df.dropna(subset=existing_targets, how='all')

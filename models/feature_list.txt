@@ -38,3 +38,6 @@ monomer_DCPA
 monomer_EDMA
 monomer_1
 monomer_HPA
+chem_avg_tg
+chem_avg_mw
+chem_avg_polarity
