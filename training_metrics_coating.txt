@@ -1,0 +1,5 @@
+# Coating Model Training Report
+
+| Target | Data Points | CV R2 Mean | CV R2 Std | Test R2 | Test MAE |
+| --- | --- | --- | --- | --- | --- |
+| 점착력_target | 1879 | 0.6619 | 0.2802 | 0.7428 | 47.3254 |

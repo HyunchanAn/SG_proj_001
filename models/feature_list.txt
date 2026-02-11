@@ -3,12 +3,12 @@
 Scale
 이론 고형분(%)
 monomer_BA
-monomer_EHA
+monomer_2-EHA
 monomer_CHMA
 monomer_AA
 monomer_MMA
 monomer_IBOMA
-monomer_HEMA
+monomer_2-HEMA
 monomer_HDDA
 monomer_GMA
 monomer_NDM
@@ -18,14 +18,14 @@ monomer_BMA
 monomer_EA
 monomer_IBOA
 monomer_MA
-monomer_HEA
+monomer_2-HEA
 monomer_A
-monomer_CEA
-monomer_HBA
+monomer_b-CEA
+monomer_4-HBA
 monomer_IBXA
 monomer_NOAA
 monomer_184
-monomer_10
+monomer_MEDOL-10
 monomer_AOMA
 monomer_DPPA
 monomer_POEA
@@ -33,7 +33,7 @@ monomer_MAA
 monomer_AN
 monomer_St
 monomer_LA
-monomer_PEA
+monomer_2-PEA
 monomer_DCPA
 monomer_EDMA
 monomer_1

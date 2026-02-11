@@ -1,0 +1,39 @@
+--- Feature Importance (Top 5) ---
+Target: Tg
+  monomer_MMA: 0.6080
+  monomer_BMA: 0.1481
+  monomer_BA: 0.1099
+  monomer_EHA: 0.0699
+  이론 고형분(%): 0.0170
+  온도 Importance: 0.0000
+Target: 수율pct
+  Scale: 0.4605
+  이론 고형분(%): 0.1894
+  monomer_NDM: 0.1056
+  monomer_BA: 0.0794
+  monomer_MMA: 0.0285
+  온도 Importance: 0.0000
+Target: 점도cP
+  monomer_AA: 0.4430
+  monomer_EMA: 0.1494
+  Scale: 0.1040
+  monomer_BA: 0.0927
+  이론 고형분(%): 0.0825
+  온도 Importance: 0.0000
+
+--- Temperature Sensitivity Test ---
+Target: Tg
+  Temp 50.0: Prediction = -41.4668
+  Temp 70.0: Prediction = -41.4668
+  Temp 83.0: Prediction = -41.4668
+  Temp 100.0: Prediction = -41.4668
+Target: 수율pct
+  Temp 50.0: Prediction = 0.8361
+  Temp 70.0: Prediction = 0.8361
+  Temp 83.0: Prediction = 0.8361
+  Temp 100.0: Prediction = 0.8361
+Target: 점도cP
+  Temp 50.0: Prediction = 130.3147
+  Temp 70.0: Prediction = 130.3147
+  Temp 83.0: Prediction = 130.3147
+  Temp 100.0: Prediction = 130.3147

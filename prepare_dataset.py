@@ -3,21 +3,26 @@ import numpy as np
 import os
 import re
 
-base_path = r"e:\Github\SG_proj_001"
-input_path = os.path.join(base_path, "data_cleaned", "cleaned_synthesis_data.csv")
-output_path = os.path.join(base_path, "data_cleaned", "model_features.csv")
+# 현재 스크립트 위치 기준 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))
+input_path = os.path.join(script_dir, "data_cleaned", "cleaned_synthesis_data.csv")
+output_path = os.path.join(script_dir, "data_cleaned", "model_features.csv")
 
 def extract_monomer_features(text):
-    if pd.isna(text) or not isinstance(text, str):
+    if pd.isna(text) or not isinstance(text, str) or text.strip() == "":
         return {}
     
-    # Improved regex to handle various formats: "2EHA 40", "EA(50)", "AA 1.5"
-    matches = re.findall(r'([a-zA-Z가-힣0-9]+)\s*\(?([\d.]+)\)?', text)
+    # 정규표현식 강화: 'BA 40', 'BA(40)', 'BA 40/EA 10', 'BA 40.5 EA 10' 등 대응
+    # 1. 괄호 제거 및 슬래시/쉼표를 공백으로 치환하여 통일
+    clean_text = re.sub(r'[\(\),/]', ' ', text)
+    # 2. 이름과 숫자 쌍 추출 (예: BA 40)
+    matches = re.findall(r'([a-zA-Z가-힣0-9.-]+)\s*([\d.]+)', clean_text)
+    
     features = {}
     for name, val in matches:
         try:
-            # Ensure name is string and val is float
-            feat_name = "monomer_" + str(name)
+            # 특수문자로 시작하거나 끝나는 이름 정제
+            feat_name = "monomer_" + name.strip('-').strip('.')
             features[feat_name] = float(val)
         except:
             continue
