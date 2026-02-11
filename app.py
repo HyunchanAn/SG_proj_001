@@ -46,18 +46,20 @@ else:
         st.subheader("실험 조건 입력")
         
         # 기본 공정 조건
-        temp = st.slider("반응 온도 (도)", 50, 100, 80)
-        time = st.number_input("반응 시간 (시간)", 0.0, 24.0, 4.5)
-        solid_pct = st.number_input("이론 고형분 (%)", 0.0, 100.0, 40.0)
-        scale = st.number_input("Scale", 0.0, 2000.0, 900.0)
+        temp = st.slider("반응 온도 (°C)", 50, 100, 80)
+        time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.5)
+        solid_pct = st.number_input("이론 고형분 (wt%)", 0.0, 100.0, 40.0)
+        scale = st.number_input("Scale (g)", 0.0, 2000.0, 900.0)
 
         st.subheader("모노머 배합비 (함량 입력)")
+        st.info("모노머 함량의 합계가 100(phr)이 되도록 입력하는 것을 권장합니다.")
+        
         # 모노머 입력 동적 생성
         monomer_inputs = {}
         for feat in all_features:
             if feat.startswith("monomer_"):
                 name = feat.replace("monomer_", "")
-                monomer_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 1000.0, 0.0)
+                monomer_inputs[feat] = st.number_input(f"{name} 함량 (phr)", 0.0, 1000.0, 0.0)
 
     with col2:
         st.subheader("예측 결과 대시보드")
