@@ -42,6 +42,15 @@ syn_models, coat_models = load_all_models()
 syn_features = get_feature_list("feature_list.txt")
 coat_features = get_feature_list("coating_feature_list.txt")
 
+# 세션 상태 초기화 및 콜백 정의
+def on_transfer_recipe():
+    if 'opt_result' in st.session_state:
+        res = st.session_state['opt_result']
+        for m, v in res.items():
+            key = f"syn_monomer_{m}"
+            st.session_state[key] = float(v)
+        st.session_state['transfer_success'] = True
+
 st.title("AI 고분자 물성 시뮬레이션 시스템")
 st.markdown("---")
 
@@ -281,13 +290,12 @@ with tab3:
                 
                 st.info("💡 위 배합비를 '합성 시뮬레이터' 탭에 입력하여 실제 예측치를 상세 검증해 보세요.")
                 
-                if st.button("합성 시뮬레이터로 배합비 전송 📤", use_container_width=True):
-                    # 합성 시뮬레이터의 세션 상태 키값 업데이트
-                    for m, v in res.items():
-                        key = f"syn_monomer_{m}"
-                        st.session_state[key] = float(v)
+                if st.button("합성 시뮬레이터로 배합비 전송 📤", use_container_width=True, on_click=on_transfer_recipe):
+                    pass # 콜백에서 정합성 처리
+                
+                if st.session_state.get('transfer_success'):
                     st.success("배합비가 '합성 시뮬레이터' 탭으로 전송되었습니다. 해당 탭으로 이동하여 확인하세요.")
-                    st.rerun()
+                    st.session_state['transfer_success'] = False
             else:
                 st.write("왼쪽에서 목표 설정을 완료한 후 버튼을 클릭해 주세요.")
 
