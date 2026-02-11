@@ -1,0 +1,23 @@
+# Development Log
+
+##### 2026-02-11 (1일차) #####
+
+## 데이터 클렌징 완료
+- 작업 결과:
+    - data_cleaned/cleaned_synthesis_data.csv (237 rows, 22 columns) 생성 완료
+    - data_cleaned/cleaned_coating_data.csv (1945 rows, 21 columns) 생성 완료
+
+## 기초 통계 분석 완료
+- 상관관계 분석 수행 및 유의미한 수치 확인
+
+## AI 모델 학습 완료 (RandomForest)
+- 모델 구축: Scikit-Learn의 RandomForestRegressor 활용
+- 학습 결과: 점도(R2 0.83), Tg(R2 0.76) 확보
+
+## 고분자 물성 예측 AI 모델 설계 및 시뮬레이터 구현
+- 결과: inference.py 및 app.py 구축 완료
+
+## 개발 환경 설정 및 의존성 설치 문제 해결
+- 이슈: 가상환경 활성화 후 streamlit 등 모듈 로드 실패
+- 원인: 가상환경 내 패키지 미설치 상태 확인
+- 조치: .venv 내 python 명령을 사용하여 requirements.txt 기반 패키지 재설치 실시

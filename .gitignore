@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+analysis_report.txt
+analysis_result.txt
+peek_csv.py
+peek_raw.py
+generate_summary.py
+analyze_csv.py
+analyze_results.py
+training_metrics.txt
