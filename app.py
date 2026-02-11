@@ -198,7 +198,19 @@ with tab3:
         
         with opt_col1:
             st.subheader("목표 물성 설정")
-            target_tg = st.slider("목표 유리전이온도 (Tg, °C)", -80.0, 100.0, -30.0, step=0.5, key="opt_target_tg")
+            # 대상 물성 선택 (학습된 모델이 있는 타겟들)
+            available_targets = list(syn_models.keys())
+            target_property = st.selectbox("최적화 대상 물성", available_targets, index=available_targets.index("Tg") if "Tg" in available_targets else 0)
+            
+            # 물성별 슬라이더 범위 동적 설정
+            if "Tg" in target_property:
+                target_val = st.slider(f"목표 {target_property}", -80.0, 100.0, -30.0, step=0.5)
+            elif "점도" in target_property:
+                target_val = st.number_input(f"목표 {target_property}", 0, 50000, 5000)
+            elif "입도" in target_property:
+                target_val = st.number_input(f"목표 {target_property}", 0, 1000, 150)
+            else:
+                target_val = st.number_input(f"목표 {target_property}", 0.0, 10000.0, 100.0)
             
             st.subheader("공정 제약 조건")
             opt_temp = st.number_input("중합 온도 (°C)", 50, 120, 80, key="opt_temp")
@@ -212,15 +224,15 @@ with tab3:
                     '온도': opt_temp,
                     '반응시간': opt_time,
                     '이론 고형분(%)': opt_solid / 100.0,
-                    'Scale': 500 # 기본값
+                    'Scale': 500
                 }
                 
-                with st.spinner("최적의 배합비를 계산 중입니다..."):
-                    recipe, err = optimize_recipe(target_tg, params)
+                with st.spinner(f"최적의 {target_property} 달성 배합비를 계산 중입니다..."):
+                    recipe, err = optimize_recipe(target_property, target_val, params)
                     
                     if recipe:
                         st.session_state['opt_result'] = recipe
-                        st.session_state['opt_target_tg_val'] = target_tg
+                        st.session_state['opt_target_info'] = f"{target_property}: {target_val}"
                     else:
                         st.error(f"오류 발생: {err}")
 
@@ -229,23 +241,21 @@ with tab3:
             
             if 'opt_result' in st.session_state:
                 res = st.session_state['opt_result']
-                target_val = st.session_state['opt_target_tg_val']
+                target_info = st.session_state['opt_target_info']
                 
-                st.success(f"목표 Tg {target_val}°C 달성을 위한 최적 조합을 찾았습니다.")
+                st.success(f"목표 {target_info} 달성을 위한 최적 조합을 찾았습니다.")
                 
-                # 결과 시각화
-                res_df = pd.DataFrame([
-                    {"항목": "BA (Butyl Acrylate)", "함량 (phr)": res["BA"]},
-                    {"항목": "MMA (Methyl Methacrylate)", "함량 (phr)": res["MMA"]},
-                    {"항목": "AA (Acrylic Acid)", "함량 (phr)": res["AA"]},
-                ])
+                # 결과 테이블 구성
+                res_data = []
+                for m, v in res.items():
+                    res_data.append({"항목": m, "함량 (phr)": v})
+                res_df = pd.DataFrame(res_data)
                 st.table(res_df)
                 
-                st.info("💡 위 배합비를 '합성 시뮬레이터' 탭의 모노머 함량에 입력하여 상세 물성을 검증해 보세요.")
+                st.info("💡 위 배합비를 '합성 시뮬레이터' 탭에 입력하여 실제 예측치를 상세 검증해 보세요.")
                 
-                # 파이 차트 등 추가 시각화 가능
                 import plotly.express as px
-                fig = px.pie(res_df, values='함량 (phr)', names='항목', title='추천 모노머 구성비')
+                fig = px.pie(res_df, values='함량 (phr)', names='항목', title=f'추천 레시피 구성비 ({target_info})')
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.write("왼쪽에서 목표 설정을 완료한 후 버튼을 클릭해 주세요.")
