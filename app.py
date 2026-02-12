@@ -43,6 +43,14 @@ syn_features = get_feature_list("feature_list.txt")
 coat_features = get_feature_list("coating_feature_list.txt")
 
 # 세션 상태 초기화 및 콜백 정의
+# 초기 진입 시 기본 모노머 함량 세팅 (경고 방지)
+DEFAULT_MONOMERS = {"monomer_BA": 89.7, "monomer_MMA": 9.0, "monomer_AA": 1.3}
+
+for m_key, m_val in DEFAULT_MONOMERS.items():
+    key = f"syn_{m_key}"
+    if key not in st.session_state:
+        st.session_state[key] = m_val
+
 def on_transfer_recipe():
     if 'opt_result' in st.session_state:
         res = st.session_state['opt_result']
@@ -83,8 +91,13 @@ with tab1:
             for feat in syn_features:
                 if feat.startswith("monomer_"):
                     name = feat.replace("monomer_", "")
-                    default_val = default_monomers.get(feat, 0.0)
-                    monomer_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 1000.0, default_val, key=f"syn_{feat}")
+                    # session_state에 이미 값이 있다면 (전송 등) 이를 그대로 활용하고 value 인자는 생략
+                    # 만약 session_state에 해당 키가 없으면 기본값 0.0으로 초기화 (경고 방지)
+                    key = f"syn_{feat}"
+                    if key not in st.session_state:
+                        st.session_state[key] = 0.0
+                        
+                    monomer_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 1000.0, key=key)
             
             total_phr = sum(monomer_inputs.values())
             if abs(total_phr - 100.0) > 0.01:
