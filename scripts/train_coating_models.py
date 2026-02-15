@@ -22,7 +22,7 @@ def train_coating_models():
         print(f"Error: Coating feature dataset not found at {input_path}")
         return []
 
-    df = pd.read_csv(input_path)
+    df = pd.read_csv(input_path, encoding='utf-8-sig')
     
     # Target: 점착력_target
     target_col = '점착력_target'

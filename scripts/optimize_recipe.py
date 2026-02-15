@@ -28,10 +28,12 @@ def load_feature_list():
             return [line.strip() for line in f.readlines()]
     return []
 
-def optimize_recipe(targets_dict, fixed_params=None):
+def optimize_recipe(targets_dict, fixed_params=None, constraints=None):
     """
-    targets_dict: {'Tg': {'target': -30, 'weight': 1.0}, '점도(cP)': {'target': 5000, 'weight': 0.5}, ...}
-    fixed_params: {'온도': 80, '반응시간': 4.5, ...}
+    [Rollback Version]
+    targets_dict: {'Tg': {'target': -30, 'weight': 1.0}, ...}
+    fixed_params: {'온도': 80, ...}
+    constraints: (UI 호환성을 위해 유지되나 알고리즘에는 미반영됨)
     """
     if not targets_dict:
         return None, "최소 하나 이상의 목표 물성을 설정해야 합니다."
@@ -49,7 +51,7 @@ def optimize_recipe(targets_dict, fixed_params=None):
         else:
             return None, f"'{target_name}' 모델을 불러올 수 없습니다."
 
-    # 최적화 대상 모노머 자동 탐지
+    # 최적화 대상 모노머 (기존 하드코딩된 4종으로 롤백)
     monomer_cols = [f for f in features if f.startswith("monomer_")]
     target_monomers = ["monomer_BA", "monomer_MMA", "monomer_AA", "monomer_2-EHA"]
     target_monomers = [m for m in target_monomers if m in monomer_cols]
@@ -75,15 +77,13 @@ def optimize_recipe(targets_dict, fixed_params=None):
         input_df = pd.DataFrame([input_dict])
         input_df = input_df[features]
         
-        # 통합 손실 함수 계산 (가중치 적용)
+        # 통합 손실 함수 계산 (가중치 적용 제곱 오차)
         total_loss = 0.0
         for target_name, config in targets_dict.items():
             pred = models[target_name].predict(input_df)[0]
             target_val = config['target']
             weight = config.get('weight', 1.0)
             
-            # 물성별 스케일 차이가 크므로 상대 오차 또는 로그 스케일 고려 가능하나 
-            # 여기서는 단순 가중치 제곱 오차 적용 (사용자가 가중치로 조절)
             total_loss += weight * ((pred - target_val) / (abs(target_val) + 1e-6))**2
         
         # PHR 합계 페널티
@@ -101,6 +101,7 @@ def optimize_recipe(targets_dict, fixed_params=None):
         for i, m_name in enumerate(target_monomers):
             optimized_phr[m_name.replace("monomer_", "")] = max(0, res.x[i])
         
+        # 합계 정규화
         total = sum(optimized_phr.values())
         if total > 0:
             for k in optimized_phr:
@@ -113,19 +114,8 @@ def optimize_recipe(targets_dict, fixed_params=None):
         return None, f"최적의 배합비를 찾는 데 실패했습니다. (Loss: {res.fun:.4f})"
 
 if __name__ == "__main__":
-    import pandas as pd
-    # 다중 목표 테스트
-    test_targets = {
-        'Tg': {'target': -35.0, 'weight': 1.0},
-        '점도(cP)': {'target': 5000, 'weight': 0.5}
-    }
+    # 간단한 테스트 코드 유지
+    test_targets = {'Tg': {'target': -35.0, 'weight': 1.0}}
     params = {'온도': 80, '반응시간': 4.5, '이론 고형분(%)': 0.48, 'Scale': 500}
-    print(f"--- 다중 목표 역설계 엔진 테스트 ---")
     recipe, err = optimize_recipe(test_targets, params)
-    if recipe:
-        print("최적 배합비 추천 결과 (phr):")
-        for m, v in recipe.items():
-            print(f"- {m}: {v:.2f}")
-        print(f"합계: {sum(recipe.values()):.2f}")
-    else:
-        print(f"에러: {err}")
+    print(recipe if recipe else err)

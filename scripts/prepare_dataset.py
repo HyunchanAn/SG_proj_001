@@ -18,10 +18,30 @@ def extract_monomer_features(text):
     matches = re.findall(r'([a-zA-Z가-힣0-9\-\.]+)\s*\(?([\d.]+)\)?', text)
     
     features = {}
+    known_additives = ["NDM", "AIBN", "V-65", "LPO"] # 분자량 조절제, 개시제 등 제외
+
     for name, val in matches:
         try:
-            # 특수문자로 시작하거나 끝나는 이름 정제 (중간 하이픈은 보존)
-            feat_name = "monomer_" + name.strip('-').strip('.')
+            clean_name = name.strip('-').strip('.')
+            
+            # 필터링 1: 순수 숫자만 있는 경우 무시 (예: "1", "100")
+            if clean_name.isdigit():
+                continue
+                
+            # 필터링 2: 1글자 이하 무시 (예: "-", ".")
+            if len(clean_name) < 2:
+                continue
+
+            # 필터링 3: Known Additives 제외 (또는 별도 피처로 빼야 함)
+            # 여기서는 모델이 '주 모노머'로 오인하지 않도록 일단 제외하거나 'additive_'로 접두어 변경
+            if clean_name.upper() in known_additives:
+                # feat_name = "additive_" + clean_name 
+                # (일단 기존 로직 유지를 위해 제외 처리하거나, 별도로 관리. 
+                #  사용자는 '모노머'라고 생각하고 넣었을 수 있으므로... 
+                #  하지만 역설계 최적화에서 20 phr씩 넣는걸 막으려면 monomer_ 접두어를 안 쓰는 게 맞음)
+                continue 
+
+            feat_name = "monomer_" + clean_name
             features[feat_name] = float(val)
         except:
             continue

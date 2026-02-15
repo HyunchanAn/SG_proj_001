@@ -22,7 +22,7 @@ def train_property_models_rf():
         print(f"Error: Feature dataset not found at {input_path}")
         return []
 
-    df = pd.read_csv(input_path)
+    df = pd.read_csv(input_path, encoding='utf-8-sig')
     
     # Define features and targets
     target_cols = ['수율(%)', '점도(cP)', 'Tg', '입도(nm)']

@@ -25,7 +25,7 @@ def clean_numeric(value):
         return None
 
 def process_synthesis_data():
-    file_path = os.path.join(base_path, "Lab 합성 총괄_250401부터241031까지.csv")
+    file_path = os.path.join(base_path, "raw_data", "Lab 합성 총괄_250401부터241031까지.csv")
     try:
         # Synthesis data uses Tab
         df = pd.read_csv(file_path, encoding='cp949', sep='\t', on_bad_lines='skip')
@@ -48,7 +48,7 @@ def process_synthesis_data():
         return False
 
 def process_coating_data():
-    file_path = os.path.join(base_path, "Lab 도포 총괄_250401부터241031까지.csv")
+    file_path = os.path.join(base_path, "raw_data", "Lab 도포 총괄_250401부터241031까지.csv")
     try:
         # Try Tab first, then Comma
         df = None

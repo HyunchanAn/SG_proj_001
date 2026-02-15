@@ -53,10 +53,23 @@ for m_key, m_val in DEFAULT_MONOMERS.items():
 
 def on_transfer_recipe():
     if 'opt_result' in st.session_state:
+        # 1. 모든 모노머 입력값을 명시적으로 0.0으로 초기화
+        for feat in syn_features:
+            if feat.startswith("monomer_"):
+                key = f"syn_{feat}"
+                st.session_state[key] = 0.0
+                
+        # 2. 공정 파라미터 동기화
+        st.session_state["syn_temp"] = st.session_state.get("opt_temp", 80)
+        st.session_state["syn_time"] = st.session_state.get("opt_time", 4.5)
+        st.session_state["syn_solid"] = st.session_state.get("opt_solid", 48.0)
+        
+        # 3. 최적화 결과 적용
         res = st.session_state['opt_result']
         for m, v in res.items():
-            key = f"syn_monomer_{m}"
+            key = f"syn_monomer_{m}" # m is e.g. 'BA'
             st.session_state[key] = float(v)
+            
         st.session_state['transfer_success'] = True
 
 st.title("AI 고분자 물성 시뮬레이션 시스템")
@@ -76,28 +89,84 @@ with tab1:
             st.subheader("실험 조건 입력")
             
             # 기본 공정 조건
-            temp = st.slider("반응 온도 (°C)", 50, 100, 83, key="syn_temp")
-            time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.75, key="syn_time")
-            solid_pct = st.number_input("이론 고형분 (wt%)", 0.0, 100.0, 48.0, key="syn_solid")
-            scale = st.number_input("Scale (g)", 0.0, 2000.0, 524.27, key="syn_scale")
+            with st.expander("⚙️ 공정 조건 설정 (Process)", expanded=True):
+                temp = st.slider("반응 온도 (°C)", 50, 100, 83, key="syn_temp")
+                time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.75, key="syn_time")
+                solid_pct = st.number_input("이론 고형분 (wt%)", 0.0, 100.0, 48.0, key="syn_solid")
+                scale = st.number_input("Scale (g)", 0.0, 2000.0, 524.27, key="syn_scale")
 
             st.subheader("모노머 배합비 (phr)")
             st.info("합계가 100 phr이 되도록 입력을 권장합니다.")
             sum_placeholder = st.empty()
             
-            default_monomers = {"monomer_BA": 89.7, "monomer_MMA": 9.0, "monomer_AA": 1.3}
             monomer_inputs = {}
+            monomer_feats = [f for f in syn_features if f.startswith("monomer_")]
             
-            for feat in syn_features:
-                if feat.startswith("monomer_"):
-                    name = feat.replace("monomer_", "")
-                    # session_state에 이미 값이 있다면 (전송 등) 이를 그대로 활용하고 value 인자는 생략
-                    # 만약 session_state에 해당 키가 없으면 기본값 0.0으로 초기화 (경고 방지)
-                    key = f"syn_{feat}"
-                    if key not in st.session_state:
-                        st.session_state[key] = 0.0
-                        
-                    monomer_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 1000.0, key=key)
+            # 모노머 분류 정의 (화학적 특성 기반)
+            soft_monomers = ["BA", "2-EHA", "EA", "LMA"]  # Low Tg (Soft segment)
+            hard_monomers = ["MMA", "St", "MA", "BMA", "VAc", "AN", "EMA", "IBOA", "IBOMA", "CHMA"] # High Tg (Hard segment)
+            func_monomers = ["AA", "MAA", "2-HEMA", "2-HEA", "4-HBA", "GMA"] # Functional (Acid, OH, Epoxy)
+
+            # 분류별 리스트 생성
+            soft_list = []
+            hard_list = []
+            func_list = []
+            other_list = []
+
+            for feat in monomer_feats:
+                name = feat.replace("monomer_", "")
+                if name in soft_monomers:
+                    soft_list.append(feat)
+                elif name in hard_monomers:
+                    hard_list.append(feat)
+                elif name in func_monomers:
+                    func_list.append(feat)
+                else:
+                    other_list.append(feat)
+            
+            # 1. Soft Monomers (점착 부여, 유연성)
+            if soft_list:
+                with st.expander("☁️ Soft Monomers (Low Tg)", expanded=True):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(soft_list):
+                        name = feat.replace("monomer_", "")
+                        key = f"syn_{feat}"
+                        if key not in st.session_state: st.session_state[key] = 0.0
+                        with cols[i % 2]:
+                            monomer_inputs[feat] = st.number_input(f"{name} (phr)", 0.0, 1000.0, key=key)
+
+            # 2. Hard Monomers (응집력, 내열성)
+            if hard_list:
+                with st.expander("💎 Hard Monomers (High Tg)", expanded=False):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(hard_list):
+                        name = feat.replace("monomer_", "")
+                        key = f"syn_{feat}"
+                        if key not in st.session_state: st.session_state[key] = 0.0
+                        with cols[i % 2]:
+                            monomer_inputs[feat] = st.number_input(f"{name} (phr)", 0.0, 1000.0, key=key)
+
+            # 3. Functional Monomers (가교점, 극성 부여)
+            if func_list:
+                with st.expander("⚡ Functional Monomers (Acid/OH/Epoxy)", expanded=False):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(func_list):
+                        name = feat.replace("monomer_", "")
+                        key = f"syn_{feat}"
+                        if key not in st.session_state: st.session_state[key] = 0.0
+                        with cols[i % 2]:
+                            monomer_inputs[feat] = st.number_input(f"{name} (phr)", 0.0, 1000.0, key=key)
+
+            # 4. Others (기타)
+            if other_list:
+                with st.expander("📦 Others", expanded=False):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(other_list):
+                        name = feat.replace("monomer_", "")
+                        key = f"syn_{feat}"
+                        if key not in st.session_state: st.session_state[key] = 0.0
+                        with cols[i % 2]:
+                            monomer_inputs[feat] = st.number_input(f"{name} (phr)", 0.0, 1000.0, key=key)
             
             total_phr = sum(monomer_inputs.values())
             if abs(total_phr - 100.0) > 0.01:
@@ -158,7 +227,7 @@ with tab2:
             selected_fabric = st.selectbox("기재(원단) 선택", fabric_options, index=fabric_options.index("T45") if "T45" in fabric_options else 0, key="coat_fabric")
             
             st.subheader("첨가제 및 경화제 (%)")
-            st.info("첨가제 및 경화제의 투입 비율(%)을 입력합니다.")
+            # st.info("첨가제 및 경화제의 투입 비율(%)을 입력합니다.")
             coat_sum_placeholder = st.empty()
             
             # 도포 예시값 (Row 0 데이터 기준)
@@ -169,11 +238,28 @@ with tab2:
             }
             
             additive_inputs = {}
-            for feat in coat_features:
-                if feat.startswith("hardener_") or feat.startswith("additive_"):
-                    name = feat.replace("hardener_", "[경화제] ").replace("additive_", "[첨가제] ")
-                    default_val = default_additives.get(feat, 0.0)
-                    additive_inputs[feat] = st.number_input(f"{name} 함량", 0.0, 20.0, default_val, key=f"coat_{feat}")
+            
+            # 1. 경화제 (Hardener) 섹션
+            hardeners = [f for f in coat_features if f.startswith("hardener_")]
+            if hardeners:
+                with st.expander("🛠️ 경화제 설정 (Hardener)", expanded=True):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(hardeners):
+                        name = feat.replace("hardener_", "")
+                        default_val = default_additives.get(feat, 0.0)
+                        with cols[i % 2]:
+                            additive_inputs[feat] = st.number_input(f"{name} (%)", 0.0, 20.0, default_val, key=f"coat_{feat}")
+
+            # 2. 첨가제 (Additive) 섹션
+            additives = [f for f in coat_features if f.startswith("additive_")]
+            if additives:
+                with st.expander("💧 첨가제 설정 (Additive)", expanded=False):
+                    cols = st.columns(2)
+                    for i, feat in enumerate(additives):
+                        name = feat.replace("additive_", "")
+                        default_val = default_additives.get(feat, 0.0)
+                        with cols[i % 2]:
+                            additive_inputs[feat] = st.number_input(f"{name} (%)", 0.0, 20.0, default_val, key=f"coat_{feat}")
             
             # 합계 표시
             total_coat_pct = sum(additive_inputs.values())
@@ -246,6 +332,18 @@ with tab3:
                     
                     targets_dict[prop] = {'target': val, 'weight': weight}
             
+            st.subheader("제약 조건 설정")
+            with st.expander("🧩 배합 제약 조건 (Component Constraints)", expanded=True):
+                # 1. 성분 수 제약
+                max_components = st.slider("최대 모노머 사용 개수", 2, 10, 5, help="최적 배합비에 포함될 최대 모노머 개수를 제한합니다.")
+                
+                # 2. 필수/제외 모노머 선택
+                # 모노머 리스트 준비
+                monomer_list = [f.replace("monomer_", "") for f in syn_features if f.startswith("monomer_")]
+                
+                required_monomers = st.multiselect("필수 포함 모노머", monomer_list, placeholder="반드시 포함할 성분 선택")
+                excluded_monomers = st.multiselect("사용 제외 모노머", monomer_list, placeholder="사용하지 않을 성분 선택")
+            
             st.subheader("공정 제약 조건")
             opt_temp = st.number_input("중합 온도 (°C)", 50, 120, 80, key="opt_temp")
             opt_time = st.number_input("반응 시간 (hr)", 0.0, 24.0, 4.5, key="opt_time")
@@ -264,8 +362,14 @@ with tab3:
                         'Scale': 500
                     }
                     
-                    with st.spinner("다중 목표를 최적화하는 배합비를 계산 중입니다..."):
-                        recipe, err = optimize_recipe(targets_dict, params)
+                    constraints = {
+                        'max_components': max_components,
+                        'required': [f"monomer_{m}" for m in required_monomers],
+                        'excluded': [f"monomer_{m}" for m in excluded_monomers]
+                    }
+                    
+                    with st.spinner("다중 목표 및 제약 조건을 만족하는 배합비를 계산 중입니다..."):
+                        recipe, err = optimize_recipe(targets_dict, params, constraints)
                         
                         if recipe:
                             st.session_state['opt_result'] = recipe

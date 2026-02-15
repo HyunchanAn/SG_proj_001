@@ -25,7 +25,7 @@ MONOMER_PROPERTIES = {
 }
 
 # 기본값 (데이터 부재 시 사용)
-DEFAULT_PROPS = {"tg": 298.15, "mw": 100.0, "polarity": 0.20}
+DEFAULT_PROPS = {"chem_avg_tg": 298.15, "chem_avg_mw": 100.0, "chem_avg_polarity": 0.20}
 
 def get_chemical_features(monomer_ratios):
     """
@@ -40,9 +40,12 @@ def get_chemical_features(monomer_ratios):
     avg_mw = 0.0
     avg_polarity = 0.0
     
+    # 루프 내에서 사용할 기본 물성값 (dict 형태)
+    fallback_props = {"tg": 298.15, "mw": 100.0, "polarity": 0.20}
+
     for name, phr in monomer_ratios.items():
         base_name = name.replace("monomer_", "")
-        props = MONOMER_PROPERTIES.get(base_name, DEFAULT_PROPS)
+        props = MONOMER_PROPERTIES.get(base_name, fallback_props)
         
         weight = phr / total_phr
         avg_tg += props["tg"] * weight

@@ -11,7 +11,6 @@ monomer_IBOMA
 monomer_2-HEMA
 monomer_HDDA
 monomer_GMA
-monomer_NDM
 monomer_LMA
 monomer_EMA
 monomer_BMA
@@ -19,12 +18,10 @@ monomer_EA
 monomer_IBOA
 monomer_MA
 monomer_2-HEA
-monomer_A
 monomer_b-CEA
 monomer_4-HBA
 monomer_IBXA
 monomer_NOAA
-monomer_184
 monomer_MEDOL-10
 monomer_AOMA
 monomer_DPPA
@@ -36,7 +33,6 @@ monomer_LA
 monomer_2-PEA
 monomer_DCPA
 monomer_EDMA
-monomer_1
 monomer_HPA
 chem_avg_tg
 chem_avg_mw

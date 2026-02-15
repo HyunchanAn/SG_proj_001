@@ -3,7 +3,7 @@ import numpy as np
 import os
 import joblib
 
-base_path = r"e:\Github\SG_proj_001"
+base_path = os.path.dirname(os.path.abspath(__file__))
 model_dir = os.path.join(base_path, "models")
 
 def predict_property(features_dict):
@@ -12,7 +12,7 @@ def predict_property(features_dict):
     if not os.path.exists(feature_list_path):
         return "Error: Feature list not found."
     
-    with open(feature_list_path, "r") as f:
+    with open(feature_list_path, "r", encoding="utf-8-sig") as f:
         all_features = [line.strip() for line in f.readlines()]
     
     # Create input vector
@@ -25,7 +25,7 @@ def predict_property(features_dict):
     
     predictions = {}
     for model_file in os.listdir(model_dir):
-        if model_file.endswith(".joblib"):
+        if model_file.endswith(".joblib") and "adhesion" not in model_file:
             target_name = model_file.replace("model_rf_", "").replace(".joblib", "")
             model = joblib.load(os.path.join(model_dir, model_file))
             pred_val = model.predict(input_df)[0]
